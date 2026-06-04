@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Kivu–Katanga Swahili AI (Local MVP)
 
 This is a production‑oriented MVP (**Next.js UI + FastAPI API**) for a **voice‑first** Congolese Swahili assistant.
@@ -82,3 +83,7 @@ Example Nginx conf is in `infra/nginx/kivu_katanga_ai.conf`.
 - `services/api/data/glossary_kat_kiv.csv`
 
 You can also upload a new CSV from the Admin page.
+=======
+# Sema-AI-Project
+IA des dialectes swahili de la RDC
+>>>>>>> b79cd7515fe81e9df7a2b928c02336183cd52d2d
