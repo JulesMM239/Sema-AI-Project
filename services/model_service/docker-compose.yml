@@ -1,0 +1,53 @@
+services:
+  api:
+    build: .
+    container_name: sema-model-api
+    environment:
+      - DATABASE_URL=postgresql+psycopg://sema:sema@db:5432/sema_model
+      - REDIS_URL=redis://redis:6379/0
+      - DATA_DIR=/data
+      - SERVICE_PORT=8010
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - model_data:/data
+    ports:
+      - "8010:8010"
+
+  worker:
+    build: .
+    container_name: sema-model-worker
+    command: ["python", "-m", "app.worker"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg://sema:sema@db:5432/sema_model
+      - REDIS_URL=redis://redis:6379/0
+      - DATA_DIR=/data
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - model_data:/data
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: sema-model-db
+    environment:
+      - POSTGRES_USER=sema
+      - POSTGRES_PASSWORD=sema
+      - POSTGRES_DB=sema_model
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: sema-model-redis
+    ports:
+      - "6381:6379"
+
+volumes:
+  model_data:
+  pg_data:
