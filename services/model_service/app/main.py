@@ -20,6 +20,7 @@ from app.queue import get_queue
 from app.jobs import training_job
 from app.config import settings
 from app.infer.translator import naive_translate
+from app.infer.llm import online_model_enabled, online_model_info, translate_with_online_llm
 
 app = FastAPI(title="SEMA Model Service (MVP)", version="0.1.0")
 
@@ -37,7 +38,12 @@ def _startup():
 
 @app.get("/health")
 def health():
-    return {"ok": True, "time": datetime.utcnow().isoformat() + "Z"}
+    return {
+        "ok": True,
+        "time": datetime.utcnow().isoformat() + "Z",
+        "online_model_enabled": online_model_enabled(),
+        "online_model": online_model_info() if online_model_enabled() else None,
+    }
 
 # -------------------------- Dataset revisions --------------------------
 
@@ -176,6 +182,10 @@ def train_status(run_id: int, db: Session = Depends(get_db)):
 def list_models(db: Session = Depends(get_db)):
     rows = db.query(ModelVersion).order_by(ModelVersion.model_id, ModelVersion.created_at.desc()).all()
     out = {}
+    if online_model_enabled():
+        info = online_model_info()
+        out.setdefault(info["model_id"], [])
+        out[info["model_id"]].append(info)
     for r in rows:
         out.setdefault(r.model_id, [])
         out[r.model_id].append(
@@ -217,7 +227,32 @@ def _get_active_version(db: Session, model_id: str) -> ModelVersion:
 
 @app.post("/infer/translate", response_model=TranslateOut)
 def infer_translate(body: TranslateIn, db: Session = Depends(get_db)):
-    mv = _get_active_version(db, body.model_id) if not body.version else         db.query(ModelVersion).filter(ModelVersion.model_id == body.model_id, ModelVersion.version == body.version).first()
+    mv = None
+    if body.version and body.version != "hf":
+        mv = db.query(ModelVersion).filter(ModelVersion.model_id == body.model_id, ModelVersion.version == body.version).first()
+    elif body.version != "hf":
+        mv = db.query(ModelVersion).filter(ModelVersion.model_id == body.model_id, ModelVersion.is_active == True).first()
+        if not mv:
+            mv = db.query(ModelVersion).filter(ModelVersion.model_id == body.model_id).order_by(ModelVersion.created_at.desc()).first()
+
+    if online_model_enabled() and (
+        body.model_id == settings.hf_model_id
+        or body.model_id == "sema-kiv-kat"
+        or (body.version == "hf")
+    ):
+        glossary_path = mv.dataset_revision.glossary_path if mv and mv.dataset_revision else None
+        translated, method = translate_with_online_llm(
+            body.text,
+            body.source_dialect,
+            body.target_dialect,
+            glossary_path,
+        )
+        return TranslateOut(
+            model_id=settings.hf_model_id,
+            version="hf",
+            translated_text=translated,
+            method=method,
+        )
 
     if not mv:
         raise HTTPException(status_code=404, detail="model version not found")

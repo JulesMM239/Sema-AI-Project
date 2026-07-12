@@ -43,9 +43,12 @@ services:
   web:
     build:
       context: ./apps/web
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL-http://localhost:8000}
+        - NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL-http://localhost:8000/media}
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
-      - NEXT_PUBLIC_MEDIA_BASE_URL=http://api:8000/models
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL-http://localhost:8000}
+      - NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL-http://localhost:8000/media}
     depends_on:
       - api
     ports:
@@ -107,6 +110,15 @@ services:
       - LORA_BASE_MODEL=${LORA_BASE_MODEL-Qwen/Qwen2.5-0.5B-Instruct}
       - LORA_MAX_STEPS=${LORA_MAX_STEPS-200}
       - LORA_LR=${LORA_LR-0.0002}
+      - HF_MODEL_ID=${HF_MODEL_ID-qwen2.5-0.5b-instruct-q4_k_m}
+      - HF_MODEL_REPO=${HF_MODEL_REPO-}
+      - HF_MODEL_FILE=${HF_MODEL_FILE-}
+      - HF_TOKEN=${HF_TOKEN-}
+      - HF_CACHE_DIR=/models/model_service_data/hf_cache
+      - LLM_CTX=${LLM_CTX-4096}
+      - LLM_THREADS=${LLM_THREADS-4}
+      - LLM_GPU_LAYERS=${LLM_GPU_LAYERS-0}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS-256}
     depends_on:
       - model_db
       - model_redis
@@ -129,6 +141,15 @@ services:
       - LORA_BASE_MODEL=${LORA_BASE_MODEL-Qwen/Qwen2.5-0.5B-Instruct}
       - LORA_MAX_STEPS=${LORA_MAX_STEPS-200}
       - LORA_LR=${LORA_LR-0.0002}
+      - HF_MODEL_ID=${HF_MODEL_ID-qwen2.5-0.5b-instruct-q4_k_m}
+      - HF_MODEL_REPO=${HF_MODEL_REPO-}
+      - HF_MODEL_FILE=${HF_MODEL_FILE-}
+      - HF_TOKEN=${HF_TOKEN-}
+      - HF_CACHE_DIR=/models/model_service_data/hf_cache
+      - LLM_CTX=${LLM_CTX-4096}
+      - LLM_THREADS=${LLM_THREADS-4}
+      - LLM_GPU_LAYERS=${LLM_GPU_LAYERS-0}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS-256}
     depends_on:
       - model_db
       - model_redis

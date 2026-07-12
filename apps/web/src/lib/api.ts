@@ -132,15 +132,14 @@ export const api = {
     text: string;
     model_id?: string | null;
   }) => {
-    const q = new URLSearchParams({
-      source_dialect: params.source_dialect,
-      target_dialect: params.target_dialect,
-      text: params.text,
-    });
-    if (params.model_id) q.set('model_id', params.model_id);
+    const form = new FormData();
+    form.append('source_dialect', params.source_dialect);
+    form.append('target_dialect', params.target_dialect);
+    form.append('text', params.text);
+    if (params.model_id) form.append('model_id', params.model_id);
     return request<{ translated_text: string; audio_path: string }>(
-      `/translate/text?${q.toString()}`,
-      { method: 'POST' }
+      '/translate/text',
+      { method: 'POST', body: form }
     );
   },
 
